@@ -1,0 +1,26 @@
+{% extends "crud_base.html" %}
+{% block js %}
+{{ block.super }}
+<script type="text/javascript">
+$(document).ready(function() {
+    $('.open').addClass('ui-icon ui-icon-folder-open');
+    $('.new').addClass('ui-icon ui-icon-document');
+});
+</script>
+{% endblock js %}
+
+
+{% block body %}
+    <div class="panel-thin ui-widget">
+    <h1 class="ui-widget-header">Available editors:</h1>
+    <div class="ui-widget-content">
+    {% for obj in cruds %}
+        <div class="item ui-widget-content ui-helper-clearfix">
+            <a href="{{ obj.url_list }}">{{ obj.name }}</a>
+            <a href="{{ obj.url_create }}" class="new">New</a>
+            <a href="{{ obj.url_list }}" class="open">Open list</a>
+        </div>
+    {% endfor %}
+    </div>
+    </div>
+{% endblock %}

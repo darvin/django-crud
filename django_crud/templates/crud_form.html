@@ -1,0 +1,18 @@
+{% extends "crud_base.html" %}
+{% block js %}
+{{ block.super }}
+<script type="text/javascript">
+$(document).ready(function() {
+    $('button').button();
+    $('.crud-form').addClass('ui-widget');
+    $('.crud-form > h1').addClass('ui-widget-header');
+    $('.crud-form > form').addClass('ui-widget-content');
+});
+</script>
+{% endblock %}
+{% block crud_breadcrumbs %}
+<a href="/editors">Crud editors</a>
+{% endblock %}
+{% block crud_content %}
+<div class="crud-form">{% block crud_form %}{% endblock %}</div>
+{% endblock %}

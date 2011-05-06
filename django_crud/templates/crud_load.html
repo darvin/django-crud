@@ -1,0 +1,16 @@
+{% extends "crud_form.html" %}
+{% block crud_breadcrumbs %}
+{{ block.super }}
+<span class="ui-icon ui-icon-bullet"></span>
+<a href="../..">{{ model_verbose_name }} index</a>
+{% endblock %}
+
+{% block crud_form %}
+<h1>Upload bunch of {{ model_verbose_name }}</h1>
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+I expect data in '{{ format }}' format
+{{ form.as_p }}
+<button value="submit">Upload!</button>
+</form>
+{% endblock %}

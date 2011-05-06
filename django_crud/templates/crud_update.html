@@ -1,0 +1,15 @@
+{% extends "crud_form.html" %}
+{% block crud_breadcrumbs %}
+{{ block.super }}
+<span class="ui-icon ui-icon-bullet"></span>
+<a href="../..">{{ model_verbose_name }} index</a>
+{% endblock %}
+
+{% block crud_form %}
+<h1>Edit {{ model_verbose_name }} {{ object }}</h1>
+<form method="post">
+{% csrf_token %}
+{{ form.as_p }}
+<button value="submit">Update</button>
+</form>
+{% endblock %}

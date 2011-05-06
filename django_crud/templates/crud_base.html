@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet" href="{{ STATIC_PREFIX }}css/crud.css" type="text/css" media="all">
+{% endblock %}
+
+{% block script %}
+{{ block.super }}
+<script src="/static/js/crud.js" type="text/javascript"></script>
+{%  endblock %}
+
+{% block body %}
+<div class="crud-breadcrumbs">{% block crud_breadcrumbs %}
+<a href="/editors">Crud editors</a>
+{% endblock %}</div>
+<div class="crud-content">{% block crud_content %}{% endblock %}</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "crud_base.html" %}
+{% block js %}
+{{ block.super }}
+<script type="text/javascript">
+$(document).ready(function() {
+    $('.create').button({
+        icons: {primary: 'ui-icon-document'}
+    });
+    $('.edit').addClass('ui-icon ui-icon-pencil');
+    $('.delete').addClass('ui-icon ui-icon-trash');
+});
+</script>
+{% endblock js %}
+
+{% block crud_content %}
+<div class="panel-thin ui-widget ui-corner-top">
+<div class="ui-widget-header">
+<h1>{{ model_verbose_multiply_name }}</h1>
+</div>
+
+
+<div class="ui-widget-content">
+{% for obj in crud_object_list %}
+    <div class="item ui-widget-content ui-helper-clearfix">
+    <a href="{{ obj.url_edit }}" class="title">{{ obj.name }}</a>
+    <a href="{{ obj.url_delete }}" class="delete">del</a>
+    <a href="{{ obj.url_edit }}" class="edit">edit</a>
+    </div>
+{% endfor %}
+<a href="{{ url_create }}" class="create">Create {{ model_verbose_name }}</a>
+</div>
+</div>
+{% endblock %}

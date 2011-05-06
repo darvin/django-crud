@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block body %}
+    Really delete {{  model_verbose_name }} {{ object }} ?
+    <form method="post">
+    {% csrf_token %}
+    <button value="submit">Delete</button>
+    </form>
+
+{% endblock %}
