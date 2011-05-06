@@ -2,3 +2,5 @@ include LICENSE
 include AUTHORS
 recursive-include docs *.txt *.html
 recursive-exclude docs/build *.txt
+recursive-include django_crud/static *
+recursive-include django_crud/templates *
