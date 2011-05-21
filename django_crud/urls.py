@@ -1,11 +1,12 @@
 import re
 from django.conf.urls.defaults import *
+from views import cruds_list_view
 
 __author__ = 'darvin'
 
 from views import *
 
-
+urlpatterns = patterns("", url(r'editors$', cruds_list_view, name="cruds_list"))
 
 def get_crud_url_for_model(prefix, model_name, model, form_class=None, create_view=None, list_view=None, update_view=None, delete_view=None, create_ajax_view=None, update_ajax_view=None):
     if create_view is None:
@@ -28,11 +29,11 @@ def get_crud_url_for_model(prefix, model_name, model, form_class=None, create_vi
     load_view = CRUDLoadView.as_view(model=model)
     return (
             url(r'%s%s/create/$' % (re.escape(prefix.lstrip('/')), model_name), create_view, name='crud_%s_create'%model_name),
-            url(r'%s%s/(?P<pk>\w+)/update/$' % (re.escape(prefix.lstrip('/')), model_name), update_view, name='crud_%s_update'%model_name),
+            url(r'%s%s/(?P<pk>.+)/update/$' % (re.escape(prefix.lstrip('/')), model_name), update_view, name='crud_%s_update'%model_name),
             url(r'%s%s/create.ajax/$' % (re.escape(prefix.lstrip('/')), model_name), create_ajax_view, name='crud_%s_create.ajax'%model_name),
-            url(r'%s%s/(?P<pk>\w+)/update.ajax/$' % (re.escape(prefix.lstrip('/')), model_name), update_ajax_view, name='crud_%s_update.ajax'%model_name),
+            url(r'%s%s/(?P<pk>.+)/update.ajax/$' % (re.escape(prefix.lstrip('/')), model_name), update_ajax_view, name='crud_%s_update.ajax'%model_name),
 
-            url(r'%s%s/(?P<pk>\w+)/delete/$' % (re.escape(prefix.lstrip('/')), model_name), delete_view, name='crud_%s_delete'%model_name),
+            url(r'%s%s/(?P<pk>.+)/delete/$' % (re.escape(prefix.lstrip('/')), model_name), delete_view, name='crud_%s_delete'%model_name),
             url(r'%s%s/$' % (re.escape(prefix.lstrip('/')), model_name) , list_view, name='crud_%s_list'%model_name),
             url(r'%s%s/dump.(?P<format>\w+)$' % (re.escape(prefix.lstrip('/')), model_name) , dump_view, name='crud_%s_dump'%model_name),
             url(r'%s%s/load_(?P<format>\w+)$' % (re.escape(prefix.lstrip('/')), model_name) , load_view, name='crud_%s_load'%model_name),

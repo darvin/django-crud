@@ -1,9 +1,15 @@
-{% extends "base.html" %}
-{% block body %}
-    Really delete {{  model_verbose_name }} {{ object }} ?
-    <form method="post">
-    {% csrf_token %}
-    <button value="submit">Delete</button>
-    </form>
+{% extends "crud_form.html" %}
+{% block crud_breadcrumbs %}
+{{ block.super }}
+<span class="ui-icon ui-icon-bullet"></span>
+<a href="{{ crud_urls.index }}">{{ model_verbose_name }} index</a>
+{% endblock %}
 
+{% block crud_form %}
+<h1>Really delete {{  model_verbose_name }} {{ object }} ?</h1>
+<form method="post">
+{% csrf_token %}
+{{ form.as_p }}
+    <button value="submit">Delete</button>
+</form>
 {% endblock %}

@@ -1,0 +1,40 @@
+{% load static %}
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet" href="{{ STATIC_PREFIX }}css/crud.css" type="text/css" media="all">
+{% endblock %}
+
+{% block script %}
+{%  endblock %}
+
+{% block body %}
+<div class="crud-content">
+{% block crud_content %}
+<div class="crud-form" id="crud-form-{{ uuid }}">
+    {% block crud_form %}{% endblock %}
+</div>
+{% endblock %}
+</div>
+{% endblock %}
+
+
+<script type="text/javascript">
+var crud_form_container_id = "crud-form-{{ uuid }}";
+$(document).ready(function() {
+	$('button').button();
+	$('.crud-form').addClass('ui-widget');
+	$('.crud-form > h1').addClass('ui-widget-header');
+	$('.crud-form > form').addClass('ui-widget-content');
+
+	var div = $("#"+crud_form_container_id);
+	$(div.children("form")).ajaxForm(function(_r) {
+		/*var $context_widget_node = $("#"+crud_form_container_id).parents(".ui-dialog")
+		if( 'undefined' != typeof( $context_widget_node ) ) {
+			$context_widget_node.translationWidget('ajax_form_callback', _r);
+		}*/
+		if( 'undefined' != typeof(widgetFormSubmitted) ) {
+			widgetFormSubmitted(_r);
+		}
+	});
+});
+</script>

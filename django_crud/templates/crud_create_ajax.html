@@ -1,0 +1,10 @@
+{% extends "crud_base_ajax.html" %}
+
+{% block crud_form %}
+    <h1>Create new {{ model_verbose_name }}</h1>
+    <form method="post" action="{{ url_self }}">
+    {% csrf_token %}
+        {{ form.as_p }}
+    <button id="submit">Create (ajax)</button>
+    </form>
+{% endblock %}

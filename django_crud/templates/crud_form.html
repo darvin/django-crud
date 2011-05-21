@@ -11,7 +11,7 @@ $(document).ready(function() {
 </script>
 {% endblock %}
 {% block crud_breadcrumbs %}
-<a href="/editors">Crud editors</a>
+<a href="{{ crud_urls.cruds }}">Crud editors</a>
 {% endblock %}
 {% block crud_content %}
 <div class="crud-form">{% block crud_form %}{% endblock %}</div>

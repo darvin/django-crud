@@ -6,16 +6,24 @@ $(document).ready(function() {
     $('.create').button({
         icons: {primary: 'ui-icon-document'}
     });
+    $('.dump').button({
+        icons: {primary: 'ui-icon-disk'}
+    });
+    $('.load').button({
+        icons: {primary: 'ui-icon-folder-open'}
+    });
     $('.edit').addClass('ui-icon ui-icon-pencil');
+    $('.save').addClass('ui-icon ui-icon-disk');
     $('.delete').addClass('ui-icon ui-icon-trash');
+
 });
 </script>
 {% endblock js %}
 
 {% block crud_content %}
-<div class="panel-thin ui-widget ui-corner-top">
+<div class="crud-content panel-wide ui-widget ui-corner-top">
 <div class="ui-widget-header">
-<h1>{{ model_verbose_multiply_name }}</h1>
+<h1>{{ model_verbose_name_plural }}</h1>
 </div>
 
 
@@ -24,10 +32,13 @@ $(document).ready(function() {
     <div class="item ui-widget-content ui-helper-clearfix">
     <a href="{{ obj.url_edit }}" class="title">{{ obj.name }}</a>
     <a href="{{ obj.url_delete }}" class="delete">del</a>
+    <a href="{{ obj.url_dump }}" class="save">save</a>
     <a href="{{ obj.url_edit }}" class="edit">edit</a>
     </div>
 {% endfor %}
-<a href="{{ url_create }}" class="create">Create {{ model_verbose_name }}</a>
+<a href="{{ crud_urls.create }}" class="create">Create {{ model_verbose_name }}</a>
+<a href="{{ crud_urls.dump }}" class="dump">Dump all documents</a>
+<a href="{{ crud_urls.load }}" class="load">Load documents from dump</a>
 </div>
 </div>
 {% endblock %}

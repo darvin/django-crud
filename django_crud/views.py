@@ -1,16 +1,19 @@
 from copy import copy
+import uuid
 from pprint import pprint
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django import forms
 from django.template.defaultfilters import striptags
+from django.conf import settings
+from django.utils.http import urlquote, urlquote_plus
 
 from django.views.generic import ListView, DeleteView, CreateView, UpdateView
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from django.views.generic.list import MultipleObjectMixin, BaseListView
-from django.views.generic.edit import ProcessFormView, FormView
+from django.views.generic.edit import ProcessFormView, FormView, ModelFormMixin
 from mongoforms.forms import MongoFormMetaClass, MongoForm
 
 
@@ -25,6 +28,7 @@ except ImportError:
 registered_cruds = set()
 
 
+DEFAULT_FORMAT = getattr(settings, 'CRUD_DEFAULT_FORMAT', "yaml")
 
 
 class MongoSingleObjectMixin(object):
@@ -35,15 +39,19 @@ class MongoSingleObjectMixin(object):
             return self.model.objects()
     def get_form_class(self):
         try:
-            #fixme: detect mongo model
             self.model._meta.app_label
         except AttributeError:
-            # The inner Meta class fails if model = model is used for some reason.
-            tmp_model = self.model
-            # TODO: we should be able to construct a ModelForm without creating
-            # and passing in a temporary inner class.
             class Meta:
-                document = tmp_model
+                document = self.model
+
+            try:
+                for key,value in self.model._fields.items():
+                    if value.primary_key:
+                        prep_fields = self.model._fields.keys()
+                        Meta.fields = prep_fields
+
+            except KeyError:
+                pass
 
 
             if self.form_class is not None:
@@ -77,10 +85,20 @@ class MongoSingleObjectMixin(object):
         context = kwargs
         context_object_name = self.get_context_object_name(self.object)
 
-        context['model_verbose_multiply_name'] = self.model.__name__+"s"
+        context['model_verbose_name_plural'] = self.model.__name__+"s"
         context['model_verbose_name'] = self.model.__name__
 
         context['model_name'] = model_name = self.model.__name__.lower()
+        context["uuid"] = uuid.uuid4()
+
+        context["crud_urls"] = {
+            "cruds":reverse("cruds_list"),
+            "create":reverse("crud_%s_create"%model_name),
+            "load":reverse("crud_%s_load"%model_name, args=[DEFAULT_FORMAT]),
+            "dump":reverse("crud_%s_dump"%model_name, args=[DEFAULT_FORMAT]),
+            "index":reverse("crud_%s_list"%model_name),
+        }
+
         if context_object_name:
             context[context_object_name] = self.object
         return context
@@ -136,8 +154,10 @@ class CRUDLoadView(MongoMultipleObjectsMixin, FormView):
             print d
             if kwargs["format"]=="json":
                 data = json.loads(d)
-            elif kwargs["format"]=="json":
+            elif kwargs["format"]=="yaml":
                 data = yaml.load(d)
+            else:
+                raise NotImplementedError
 
             for objd in data:
                 newobj = self.model.from_data(objd)
@@ -152,7 +172,7 @@ class CRUDLoadView(MongoMultipleObjectsMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super(CRUDLoadView, self).get_context_data(**kwargs)
         context["format"] = kwargs["format"]
-        context['model_verbose_multiply_name'] = self.model.__name__+"s"
+        context['model_verbose_name_plural'] = self.model.__name__+"s"
         context['model_verbose_name'] = self.model.__name__
 
         context['model_name'] = model_name = self.model.__name__.lower()
@@ -170,17 +190,27 @@ class CRUDListView(MongoMultipleObjectsMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(CRUDListView, self).get_context_data(**kwargs)
-        context['model_verbose_multiply_name'] = self.model.__name__+"s"
+
+        #TODO: unify the following piece of sh... code in all views. Also ability to customize verbose_name
+        #TODO: and verbose_name_plural for models needed. Maybe create a subclass of Document for crud
+        #TODO: since mongoengine does not provide support for meta options in theirs document?
+        context['model_verbose_name_plural'] = self.model.__name__+"s"
         context['model_verbose_name'] = self.model.__name__
 
         context['model_name'] = model_name = self.model.__name__.lower()
         context['crud_object_list'] = []
+        context["crud_urls"] = {
+            "cruds":reverse("cruds_list"),
+            "create":reverse("crud_%s_create"%model_name),
+            "load":reverse("crud_%s_load"%model_name, args=[DEFAULT_FORMAT]),
+            "dump":reverse("crud_%s_dump"%model_name, args=[DEFAULT_FORMAT]),
+        }
         for obj in context['object_list']:
             crud_obj = {}
             crud_obj["object"] = obj
             crud_obj["name"] = unicode(obj)
-            crud_obj["url_edit"] = reverse("crud_%s_update"%model_name, args=[obj.pk])
-            crud_obj["url_delete"] = reverse("crud_%s_delete"%model_name, args=[obj.pk])
+            crud_obj["url_edit"] = reverse("crud_%s_update"%model_name, kwargs={"pk":urlquote_plus(obj.pk)})
+            crud_obj["url_delete"] = reverse("crud_%s_delete"%model_name, kwargs={"pk":urlquote_plus(obj.pk)})
             context['crud_object_list'].append(crud_obj)
         context["url_create"] = reverse("crud_%s_create"%model_name)
 
@@ -201,7 +231,7 @@ class CRUDUpdateView(MongoSingleObjectMixin, UpdateView):
 
 
     def get_success_url(self):
-        return reverse("crud_%s_update"%self.get_model_name(), args=[self.object.pk])
+        return reverse("crud_%s_update"%self.get_model_name(), kwargs={"pk":urlquote_plus(self.object.pk)})
 
 
 class AjaxForm(object):
@@ -216,7 +246,8 @@ class AjaxForm(object):
     
 class AjaxMixin(object):
     def form_valid(self, form):
-        return HttpResponse(json.dumps({'success':True}, ensure_ascii=False),
+        ModelFormMixin.form_valid(self, form)
+        return HttpResponse(json.dumps({'success':True, 'object':form.instance.dump(), "object_pk":unicode(form.instance.pk)}, ensure_ascii=False),
                             mimetype='application/json')
 
     def form_invalid(self, form):
@@ -237,23 +268,34 @@ class AjaxMixin(object):
 
 
             if self.form_class is not None:
-                return self.form_class
+                class_name = self.model.__name__ + 'CrudAjaxForm'
+                return MongoFormMetaClass(class_name, (AjaxForm, self.form_class,), {'Meta': self.form_class.Meta})
+
             else:
-                class_name = self.model.__name__ + 'Form'
+                class_name = self.model.__name__ + 'CrudAjaxForm'
                 return MongoFormMetaClass(class_name, (AjaxForm, MongoForm,), {'Meta': Meta})
 
-class CRUDUpdateAjaxView(AjaxMixin, CRUDUpdateView):
-    pass
 
 class CRUDCreateView(MongoSingleObjectMixin, CreateView):
     template_name = "crud_create.html"
 
-
     def get_success_url(self):
-        return reverse("crud_%s_update"%self.get_model_name(), args=[self.object.pk])
+        return reverse("crud_%s_update"%self.get_model_name(), kwargs={"pk":urlquote_plus(self.object.pk)})
 
 class CRUDCreateAjaxView(AjaxMixin, CRUDCreateView):
-    pass
+    template_name = "crud_create_ajax.html"
+    def get_context_data(self, **kwargs):
+        context = super(CRUDCreateAjaxView, self).get_context_data(**kwargs)
+        context["url_self"] = reverse("crud_%s_create.ajax"%self.model.__name__.lower())
+        return context
+
+
+class CRUDUpdateAjaxView(AjaxMixin, CRUDUpdateView):
+    template_name = "crud_update_ajax.html"
+    def get_context_data(self, **kwargs):
+        context = super(CRUDUpdateAjaxView, self).get_context_data(**kwargs)
+        context["url_self"] = reverse("crud_%s_update.ajax"%self.model.__name__.lower(), kwargs={"pk":urlquote_plus(self.object.pk)})
+        return context
 
 def cruds_list_view(request):
     cruds = []

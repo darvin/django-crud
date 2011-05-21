@@ -2,7 +2,7 @@
 {% block crud_breadcrumbs %}
 {{ block.super }}
 <span class="ui-icon ui-icon-bullet"></span>
-<a href="../..">{{ model_verbose_name }} index</a>
+<a href="{{ crud_urls.index }}">{{ model_verbose_name }} index</a>
 {% endblock %}
 
 {% block crud_form %}
